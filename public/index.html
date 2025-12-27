@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Task Reminder - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+            color: #1F2937;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #E5E7EB;
+        }
+
+        .header-title h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+            color: #1F2937;
+        }
+
+        .header-title p {
+            font-size: 0.9rem;
+            color: #6B7280;
+        }
+
+        .add-user-btn {
+            background: #4F46E5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .add-user-btn:hover {
+            background: #4338CA;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #F9FAFB;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #E5E7EB;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #4F46E5;
+            font-size: 2rem;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+
+        .stat-card p {
+            color: #6B7280;
+            font-size: 0.9rem;
+        }
+
+        .users-section {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            color: #1F2937;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .refresh-btn {
+            background: #F9FAFB;
+            color: #4F46E5;
+            border: 1px solid #E5E7EB;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .refresh-btn:hover {
+            background: #F3F4F6;
+            border-color: #4F46E5;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .user-card {
+            background: #FFFFFF;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid #E5E7EB;
+            border-left: 3px solid #4F46E5;
+            transition: all 0.2s;
+        }
+
+        .user-card:hover {
+            border-left-width: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .user-info h3 {
+            color: #1F2937;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .user-info .phone {
+            color: #6B7280;
+            font-size: 0.9rem;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-active {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .status-inactive {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        .task-section {
+            background: #F9FAFB;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .task-section h4 {
+            color: #4F46E5;
+            font-size: 0.75rem;
+            margin-bottom: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .task-section p {
+            color: #1F2937;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+
+        .guilt-buddy {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: #FEF3C7;
+            border-radius: 6px;
+            border: 1px solid #FDE68A;
+        }
+
+        .guilt-buddy-icon {
+            font-size: 1.5rem;
+        }
+
+        .guilt-buddy-info {
+            flex: 1;
+        }
+
+        .guilt-buddy-info strong {
+            color: #92400E;
+            display: block;
+            margin-bottom: 3px;
+            font-size: 0.9rem;
+        }
+
+        .guilt-buddy-info span {
+            color: #6B7280;
+            font-size: 0.85rem;
+        }
+
+        .no-guilt-buddy {
+            color: #9CA3AF;
+            font-style: italic;
+            font-size: 0.85rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid #E5E7EB;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            color: #1F2937;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #6B7280;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+
+        .close-btn:hover {
+            background: #F3F4F6;
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #374151;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-group label .required {
+            color: #EF4444;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #D1D5DB;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .helper-text {
+            font-size: 0.8rem;
+            color: #6B7280;
+            margin-top: 4px;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: #F9FAFB;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            margin: 0;
+            cursor: pointer;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .guilt-buddy-fields {
+            display: none;
+            padding: 16px;
+            background: #FFFBEB;
+            border-radius: 6px;
+            border: 1px solid #FDE68A;
+            margin-bottom: 20px;
+        }
+
+        .guilt-buddy-fields.active {
+            display: block;
+        }
+
+        .modal-footer {
+            padding: 16px 24px;
+            border-top: 1px solid #E5E7EB;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .btn-primary {
+            background: #4F46E5;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #4338CA;
+        }
+
+        .btn-primary:disabled {
+            background: #9CA3AF;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #F3F4F6;
+            color: #374151;
+            border: 1px solid #D1D5DB;
+        }
+
+        .btn-secondary:hover {
+            background: #E5E7EB;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            border-radius: 8px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.active {
+            display: flex;
+        }
+
+        .toast-success {
+            background: #D1FAE5;
+            color: #065F46;
+            border: 1px solid #6EE7B7;
+        }
+
+        .toast-error {
+            background: #FEE2E2;
+            color: #991B1B;
+            border: 1px solid #FCA5A5;
+        }
+
+        .toast-icon {
+            font-size: 1.5rem;
+        }
+
+        .toast-message {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+
+            .add-user-btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .user-header {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .modal {
+                margin: 0;
+                max-height: 100vh;
+                border-radius: 0;
+            }
+
+            .toast {
+                left: 20px;
+                right: 20px;
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span class="toast-icon" id="toastIcon"></span>
+        <span class="toast-message" id="toastMessage"></span>
+    </div>
+
+    <!-- Registration Modal -->
+    <div id="modalOverlay" class="modal-overlay" onclick="closeModalOnOverlay(event)">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Register New User</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="registerForm" onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label>Name <span class="required">*</span></label>
+                        <input type="text" id="name" name="name" required minlength="2" maxlength="100" placeholder="John Doe">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Phone Number <span class="required">*</span></label>
+                        <input type="tel" id="phone" name="phone" required placeholder="+919999999999">
+                        <div class="helper-text">Include country code (e.g., +91 for India, +1 for US)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Daily Task <span class="required">*</span></label>
+                        <textarea id="task" name="task" required minlength="5" maxlength="200" placeholder="Exercise for 30 minutes"></textarea>
+                        <div class="helper-text">What should you do every day?</div>
+                    </div>
+
+                    <div class="checkbox-group" onclick="toggleGuiltBuddy()">
+                        <input type="checkbox" id="hasGuiltBuddy" onclick="event.stopPropagation()">
+                        <label for="hasGuiltBuddy">Add Accountability Buddy</label>
+                    </div>
+
+                    <div id="guiltBuddyFields" class="guilt-buddy-fields">
+                        <div class="form-group">
+                            <label>Buddy Name</label>
+                            <input type="text" id="guiltBuddyName" name="guiltBuddyName" minlength="2" maxlength="100" placeholder="Jane Doe">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Buddy Phone</label>
+                            <input type="tel" id="guiltBuddyPhone" name="guiltBuddyPhone" placeholder="+911234567890">
+                            <div class="helper-text">They'll be notified if you don't complete your task</div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                        <button type="submit" class="btn btn-primary" id="submitBtn">Register</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="header-title">
+                <h1>📱 Daily Task Reminder</h1>
+                <p>Track your users and their accountability journey</p>
+            </div>
+            <button class="add-user-btn" onclick="openModal()">
+                <span>+</span>
+                <span>Add User</span>
+            </button>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <h3 id="totalUsers">0</h3>
+                <p>Total Users</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="activeUsers">0</h3>
+                <p>Active Users</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="withGuiltBuddy">0</h3>
+                <p>With Guilt Buddy</p>
+            </div>
+        </div>
+
+        <div class="users-section">
+            <div class="section-header">
+                <h2>All Users</h2>
+                <button class="refresh-btn" onclick="loadUsers()">🔄 Refresh</button>
+            </div>
+
+            <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search by name, phone, or task...">
+
+            <div id="errorMessage"></div>
+            <div id="usersContainer">
+                <div class="loading">Loading users...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allUsers = [];
+
+        // Load users on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadUsers();
+
+            // Setup search
+            document.getElementById('searchBox').addEventListener('input', (e) => {
+                filterUsers(e.target.value);
+            });
+
+            // Setup guilt buddy checkbox
+            document.getElementById('hasGuiltBuddy').addEventListener('change', toggleGuiltBuddy);
+        });
+
+        // Modal functions
+        function openModal() {
+            document.getElementById('modalOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.body.style.overflow = 'auto';
+            document.getElementById('registerForm').reset();
+            document.getElementById('guiltBuddyFields').classList.remove('active');
+            document.getElementById('hasGuiltBuddy').checked = false;
+        }
+
+        function closeModalOnOverlay(event) {
+            if (event.target.id === 'modalOverlay') {
+                closeModal();
+            }
+        }
+
+        function toggleGuiltBuddy() {
+            const checkbox = document.getElementById('hasGuiltBuddy');
+            const fields = document.getElementById('guiltBuddyFields');
+
+            if (checkbox.checked) {
+                fields.classList.add('active');
+            } else {
+                fields.classList.remove('active');
+                // Clear guilt buddy fields
+                document.getElementById('guiltBuddyName').value = '';
+                document.getElementById('guiltBuddyPhone').value = '';
+            }
+        }
+
+        // Toast notification
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const messageEl = document.getElementById('toastMessage');
+
+            // Remove existing classes
+            toast.classList.remove('toast-success', 'toast-error');
+
+            // Set content
+            messageEl.textContent = message;
+
+            if (type === 'success') {
+                toast.classList.add('toast-success');
+                icon.textContent = '✓';
+            } else {
+                toast.classList.add('toast-error');
+                icon.textContent = '✕';
+            }
+
+            // Show toast
+            toast.classList.add('active');
+
+            // Hide after 4 seconds
+            setTimeout(() => {
+                toast.classList.remove('active');
+            }, 4000);
+        }
+
+        // Form validation
+        function validatePhone(phone) {
+            // Remove spaces and dashes
+            phone = phone.replace(/[\s-]/g, '');
+
+            // Check if starts with +
+            if (!phone.startsWith('+')) {
+                return { valid: false, message: 'Phone number must start with + (country code)' };
+            }
+
+            // Check length (10-15 digits after +)
+            const digits = phone.substring(1);
+            if (!/^\d{10,15}$/.test(digits)) {
+                return { valid: false, message: 'Phone number must be 10-15 digits' };
+            }
+
+            return { valid: true, phone: phone };
+        }
+
+        // Handle registration
+        async function handleRegister(event) {
+            event.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Registering...';
+
+            // Get form values
+            const name = document.getElementById('name').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const task = document.getElementById('task').value.trim();
+            const hasGuiltBuddy = document.getElementById('hasGuiltBuddy').checked;
+            const guiltBuddyName = document.getElementById('guiltBuddyName').value.trim();
+            const guiltBuddyPhone = document.getElementById('guiltBuddyPhone').value.trim();
+
+            // Validate phone number
+            const phoneValidation = validatePhone(phone);
+            if (!phoneValidation.valid) {
+                showToast(phoneValidation.message, 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Register';
+                return;
+            }
+
+            // Validate guilt buddy phone if provided
+            if (hasGuiltBuddy && guiltBuddyPhone) {
+                const buddyPhoneValidation = validatePhone(guiltBuddyPhone);
+                if (!buddyPhoneValidation.valid) {
+                    showToast('Buddy ' + buddyPhoneValidation.message, 'error');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Register';
+                    return;
+                }
+            }
+
+            // Validate guilt buddy fields
+            if (hasGuiltBuddy && (!guiltBuddyName || !guiltBuddyPhone)) {
+                showToast('Please provide both buddy name and phone, or uncheck the option', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Register';
+                return;
+            }
+
+            // Prepare request body
+            const requestBody = {
+                phone_number: phoneValidation.phone,
+                name: name,
+                task: task
+            };
+
+            if (hasGuiltBuddy && guiltBuddyName && guiltBuddyPhone) {
+                const buddyPhoneValidation = validatePhone(guiltBuddyPhone);
+                requestBody.guilt_buddy_name = guiltBuddyName;
+                requestBody.guilt_buddy_phone = buddyPhoneValidation.phone;
+            }
+
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast('User registered successfully!', 'success');
+                    closeModal();
+                    loadUsers(); // Refresh user list
+                } else {
+                    showToast(data.message || 'Registration failed', 'error');
+                }
+
+            } catch (error) {
+                console.error('Error registering user:', error);
+                showToast('Failed to register user. Please try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Register';
+            }
+        }
+
+        async function loadUsers() {
+            const container = document.getElementById('usersContainer');
+            const errorDiv = document.getElementById('errorMessage');
+
+            container.innerHTML = '<div class="loading">Loading users...</div>';
+            errorDiv.innerHTML = '';
+
+            try {
+                const response = await fetch('/users');
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                allUsers = data.users || [];
+
+                updateStats(allUsers);
+                displayUsers(allUsers);
+
+            } catch (error) {
+                console.error('Error loading users:', error);
+                errorDiv.innerHTML = `<div class="error">❌ Failed to load users: ${error.message}</div>`;
+                container.innerHTML = '';
+            }
+        }
+
+        function updateStats(users) {
+            const total = users.length;
+            const active = users.filter(u => u.active).length;
+            const withGuiltBuddy = users.filter(u => u.guilt_buddy_phone && u.guilt_buddy_phone !== '').length;
+
+            document.getElementById('totalUsers').textContent = total;
+            document.getElementById('activeUsers').textContent = active;
+            document.getElementById('withGuiltBuddy').textContent = withGuiltBuddy;
+        }
+
+        function displayUsers(users) {
+            const container = document.getElementById('usersContainer');
+
+            if (users.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <h3>No users found</h3>
+                        <p>Register your first user to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = users.map(user => `
+                <div class="user-card">
+                    <div class="user-header">
+                        <div class="user-info">
+                            <h3>${escapeHtml(user.name)}</h3>
+                            <p class="phone">${escapeHtml(user.phone_number)}</p>
+                        </div>
+                        <span class="status-badge ${user.active ? 'status-active' : 'status-inactive'}">
+                            ${user.active ? '✓ Active' : '✗ Inactive'}
+                        </span>
+                    </div>
+
+                    <div class="task-section">
+                        <h4>📋 DAILY TASK</h4>
+                        <p>${escapeHtml(user.task)}</p>
+                    </div>
+
+                    ${user.guilt_buddy_phone && user.guilt_buddy_phone !== '' ? `
+                        <div class="guilt-buddy">
+                            <span class="guilt-buddy-icon">🤝</span>
+                            <div class="guilt-buddy-info">
+                                <strong>Accountability Buddy: ${escapeHtml(user.guilt_buddy_name)}</strong>
+                                <span>${escapeHtml(user.guilt_buddy_phone)}</span>
+                            </div>
+                        </div>
+                    ` : `
+                        <p class="no-guilt-buddy">No accountability buddy assigned</p>
+                    `}
+                </div>
+            `).join('');
+        }
+
+        function filterUsers(searchTerm) {
+            if (!searchTerm) {
+                displayUsers(allUsers);
+                return;
+            }
+
+            const term = searchTerm.toLowerCase();
+            const filtered = allUsers.filter(user =>
+                user.name.toLowerCase().includes(term) ||
+                user.phone_number.toLowerCase().includes(term) ||
+                user.task.toLowerCase().includes(term) ||
+                (user.guilt_buddy_name && user.guilt_buddy_name.toLowerCase().includes(term))
+            );
+
+            displayUsers(filtered);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
+
