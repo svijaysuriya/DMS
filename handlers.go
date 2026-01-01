@@ -17,6 +17,7 @@ type RegisterRequest struct {
 	Task            string `json:"task"`
 	GuiltBuddyPhone string `json:"guilt_buddy_phone"` // Optional: Phone number to notify when task is not completed
 	GuiltBuddyName  string `json:"guilt_buddy_name"`  // Optional: Name of the guilt buddy
+	Timezone        string `json:"timezone"`          // Optional: User's timezone (auto-detected from phone if not provided)
 }
 
 // RegisterResponse represents the user registration response
@@ -75,8 +76,14 @@ func registerHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Determine timezone: use provided timezone, or infer from phone country code
+	timezone := req.Timezone
+	if timezone == "" || !IsValidTimezone(timezone) {
+		timezone = GetTimezoneFromPhone(req.PhoneNumber)
+	}
+
 	// Create new user
-	user, err := CreateUser(req.PhoneNumber, req.Name, req.Task, req.GuiltBuddyPhone, req.GuiltBuddyName)
+	user, err := CreateUser(req.PhoneNumber, req.Name, req.Task, req.GuiltBuddyPhone, req.GuiltBuddyName, timezone)
 	if err != nil {
 		log.Printf("Error creating user: %v", err)
 		w.Header().Set("Content-Type", "application/json")

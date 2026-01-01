@@ -34,193 +34,146 @@ func getReminderConfig() ReminderConfig {
 }
 
 // StartReminderScheduler starts the background scheduler for sending reminders
+// It checks every minute and processes each user based on their local timezone
 func StartReminderScheduler() {
-	log.Println("Starting reminder scheduler...")
+	log.Println("Starting reminder scheduler with per-user timezone support...")
 
 	// Load configuration from environment variables
 	reminderConfig := getReminderConfig()
-	log.Printf("Reminder schedule: Daily reminder at %s, Follow-up at %s",
+	log.Printf("Reminder schedule: Daily reminder at %s (user's local time), Follow-up at %s (user's local time)",
 		reminderConfig.ReminderTime, reminderConfig.FollowUpTime)
 
-	// Run scheduler every minute to check if it's time to send reminders
+	// Run scheduler every minute to check each user's local time
 	ticker := time.NewTicker(1 * time.Minute)
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			now := time.Now()
-			currentTime := now.Format("15:04")
-
-			// Check if it's time to send daily reminders
-			if currentTime == reminderConfig.ReminderTime {
-				log.Println("Time to send daily reminders")
-				sendDailyReminders()
-			}
-
-			// Check if it's time to send follow-ups
-			if currentTime == reminderConfig.FollowUpTime {
-				log.Println("Time to send follow-up reminders")
-				sendFollowUpReminders()
-			}
-
-			// Check for ignored reminders (no response after follow-up time + 2 hours)
-			if now.Hour() == 23 && now.Minute() == 0 {
-				log.Println("Checking for ignored reminders")
-				markIgnoredReminders()
-			}
+			// Process all users based on their individual timezones
+			processUsersForReminders(reminderConfig)
 		}
 	}
 }
 
-// sendDailyReminders sends reminders to all active users
-func sendDailyReminders() {
+// processUsersForReminders checks each user's local time and sends appropriate reminders
+func processUsersForReminders(config ReminderConfig) {
 	users, err := GetAllActiveUsers()
 	if err != nil {
 		log.Printf("Error getting active users: %v", err)
 		return
 	}
 
-	today := time.Now().Format("2006-01-02")
-	successCount := 0
-	failCount := 0
-
 	for _, user := range users {
-		// Check if reminder already sent today
-		existingLog, err := GetDailyLogByUserAndDate(user.ID, today)
-		if err == nil && existingLog != nil {
-			log.Printf("Reminder already sent to user %s today", user.Name)
-			continue
+		// Get user's local time
+		userLocalTime := GetUserLocalTime(user.Timezone)
+		userCurrentTime := userLocalTime.Format("15:04")
+		userToday := userLocalTime.Format("2006-01-02")
+
+		// Check if it's reminder time for this user
+		if userCurrentTime == config.ReminderTime {
+			sendReminderToUser(user, userToday)
 		}
 
-		// Create daily log entry
-		_, err = CreateDailyLog(user.ID, today)
-		if err != nil {
-			log.Printf("Error creating daily log for user %s: %v", user.Name, err)
-			failCount++
-			continue
+		// Check if it's follow-up time for this user
+		if userCurrentTime == config.FollowUpTime {
+			sendFollowUpToUser(user, userToday)
 		}
 
-		// Send reminder message
-		message := fmt.Sprintf("Good morning, %s! 🌅\n\nDaily reminder: %s\n\nReply 'Yes' or 'Done' when you complete it!",
-			user.Name, user.Task)
-
-		if err := sendTwilioWhatsApp(user.PhoneNumber, message); err != nil {
-			log.Printf("Failed to send reminder to %s: %v", user.Name, err)
-			failCount++
-		} else {
-			log.Printf("Reminder sent to %s (%s)", user.Name, user.PhoneNumber)
-			successCount++
+		// Check if it's end of day (23:00) for this user - mark ignored
+		if userLocalTime.Hour() == 23 && userLocalTime.Minute() == 0 {
+			markUserReminderAsIgnored(user, userToday)
 		}
-
-		// Small delay to avoid rate limiting
-		time.Sleep(500 * time.Millisecond)
 	}
-
-	log.Printf("Daily reminders sent: %d successful, %d failed", successCount, failCount)
 }
 
-// sendFollowUpReminders sends follow-up reminders to users who haven't responded
-func sendFollowUpReminders() {
-	today := time.Now().Format("2006-01-02")
-
-	// Get all pending logs for today
-	pendingLogs, err := GetPendingLogsForDate(today)
-	if err != nil {
-		log.Printf("Error getting pending logs: %v", err)
+// sendReminderToUser sends a daily reminder to a specific user
+func sendReminderToUser(user User, userToday string) {
+	// Check if reminder already sent today (in user's timezone)
+	existingLog, err := GetDailyLogByUserAndDate(user.ID, userToday)
+	if err == nil && existingLog != nil {
+		// Reminder already sent today
 		return
 	}
 
-	successCount := 0
-	failCount := 0
-
-	for _, logEntry := range pendingLogs {
-		// Check if follow-up already sent
-		if logEntry.FollowUpSentAt != nil {
-			continue
-		}
-
-		// Get user info by ID
-		user, err := GetUserByID(logEntry.UserID)
-		if err != nil {
-			log.Printf("User not found for log ID %d: %v", logEntry.ID, err)
-			failCount++
-			continue
-		}
-
-		// Send follow-up message
-		message := fmt.Sprintf("Hi %s, just checking in! 👋\n\nHave you completed your task: %s?\n\nReply 'Yes' or 'No'",
-			user.Name, user.Task)
-
-		if err := sendTwilioWhatsApp(user.PhoneNumber, message); err != nil {
-			log.Printf("Failed to send follow-up to %s: %v", user.Name, err)
-			failCount++
-		} else {
-			// Mark follow-up as sent
-			if err := MarkFollowUpSent(user.ID, today); err != nil {
-				log.Printf("Error marking follow-up sent: %v", err)
-			}
-			log.Printf("Follow-up sent to %s (%s)", user.Name, user.PhoneNumber)
-			successCount++
-		}
-
-		// Small delay to avoid rate limiting
-		time.Sleep(500 * time.Millisecond)
-	}
-
-	log.Printf("Follow-up reminders sent: %d successful, %d failed", successCount, failCount)
-}
-
-// markIgnoredReminders marks reminders as ignored if no response by end of day
-// and notifies guilt buddies
-func markIgnoredReminders() {
-	today := time.Now().Format("2006-01-02")
-
-	// Get all pending logs for today
-	pendingLogs, err := GetPendingLogsForDate(today)
+	// Create daily log entry
+	_, err = CreateDailyLog(user.ID, userToday)
 	if err != nil {
-		log.Printf("Error getting pending logs: %v", err)
+		log.Printf("Error creating daily log for user %s: %v", user.Name, err)
 		return
 	}
 
-	guiltBuddyNotificationsSent := 0
-	guiltBuddyNotificationsFailed := 0
+	// Send reminder message
+	message := fmt.Sprintf("Good morning, %s! 🌅\n\nDaily reminder: %s\n\nReply 'Yes' or 'Done' when you complete it!",
+		user.Name, user.Task)
 
-	for _, logEntry := range pendingLogs {
-		// Get user info
-		user, err := GetUserByID(logEntry.UserID)
-		if err != nil {
-			log.Printf("Error getting user for log ID %d: %v", logEntry.ID, err)
-			continue
-		}
+	if err := sendTwilioWhatsApp(user.PhoneNumber, message); err != nil {
+		log.Printf("Failed to send reminder to %s: %v", user.Name, err)
+	} else {
+		log.Printf("Reminder sent to %s (%s) [TZ: %s]", user.Name, user.PhoneNumber, user.Timezone)
+	}
+}
 
-		// Mark as ignored
-		if err := MarkLogAsIgnored(logEntry.UserID, today); err != nil {
-			log.Printf("Error marking log as ignored: %v", err)
-			continue
-		}
-		log.Printf("Marked log as ignored for user %s (ID: %d)", user.Name, logEntry.UserID)
-
-		// Send notification to guilt buddy if configured
-		if user.GuiltBuddyPhone != "" && user.GuiltBuddyName != "" {
-			guiltBuddyMsg := fmt.Sprintf("Hey %s! 😔\n\n%s didn't complete their task today: %s\n\nMaybe check in with them?",
-				user.GuiltBuddyName, user.Name, user.Task)
-
-			if err := sendTwilioWhatsApp(user.GuiltBuddyPhone, guiltBuddyMsg); err != nil {
-				log.Printf("Failed to send guilt buddy notification to %s: %v", user.GuiltBuddyName, err)
-				guiltBuddyNotificationsFailed++
-			} else {
-				log.Printf("Guilt buddy notification sent to %s for user %s", user.GuiltBuddyName, user.Name)
-				guiltBuddyNotificationsSent++
-			}
-
-			// Small delay to avoid rate limiting
-			time.Sleep(500 * time.Millisecond)
-		}
+// sendFollowUpToUser sends a follow-up reminder to a specific user if they haven't responded
+func sendFollowUpToUser(user User, userToday string) {
+	// Check if there's a pending log for today (in user's timezone)
+	logEntry, err := GetDailyLogByUserAndDate(user.ID, userToday)
+	if err != nil {
+		// No log for today, nothing to follow up on
+		return
 	}
 
-	log.Printf("Marked %d reminders as ignored", len(pendingLogs))
-	if guiltBuddyNotificationsSent > 0 || guiltBuddyNotificationsFailed > 0 {
-		log.Printf("Guilt buddy notifications: %d sent, %d failed", guiltBuddyNotificationsSent, guiltBuddyNotificationsFailed)
+	// Check if follow-up already sent or already responded
+	if logEntry.FollowUpSentAt != nil || logEntry.Status != "pending" {
+		return
+	}
+
+	// Send follow-up message
+	message := fmt.Sprintf("Hi %s, just checking in! 👋\n\nHave you completed your task: %s?\n\nReply 'Yes' or 'No'",
+		user.Name, user.Task)
+
+	if err := sendTwilioWhatsApp(user.PhoneNumber, message); err != nil {
+		log.Printf("Failed to send follow-up to %s: %v", user.Name, err)
+	} else {
+		// Mark follow-up as sent
+		if err := MarkFollowUpSent(user.ID, userToday); err != nil {
+			log.Printf("Error marking follow-up sent: %v", err)
+		}
+		log.Printf("Follow-up sent to %s (%s) [TZ: %s]", user.Name, user.PhoneNumber, user.Timezone)
+	}
+}
+
+// markUserReminderAsIgnored marks a user's reminder as ignored if no response by end of day
+// and notifies guilt buddy
+func markUserReminderAsIgnored(user User, userToday string) {
+	// Check if there's a pending log for today (in user's timezone)
+	logEntry, err := GetDailyLogByUserAndDate(user.ID, userToday)
+	if err != nil {
+		// No log for today
+		return
+	}
+
+	// Only mark as ignored if still pending
+	if logEntry.Status != "pending" {
+		return
+	}
+
+	// Mark as ignored
+	if err := MarkLogAsIgnored(user.ID, userToday); err != nil {
+		log.Printf("Error marking log as ignored for %s: %v", user.Name, err)
+		return
+	}
+	log.Printf("Marked log as ignored for user %s [TZ: %s]", user.Name, user.Timezone)
+
+	// Send notification to guilt buddy if configured
+	if user.GuiltBuddyPhone != "" && user.GuiltBuddyName != "" {
+		guiltBuddyMsg := fmt.Sprintf("Hey %s! 😔\n\n%s didn't complete their task today: %s\n\nMaybe check in with them?",
+			user.GuiltBuddyName, user.Name, user.Task)
+
+		if err := sendTwilioWhatsApp(user.GuiltBuddyPhone, guiltBuddyMsg); err != nil {
+			log.Printf("Failed to send guilt buddy notification to %s: %v", user.GuiltBuddyName, err)
+		} else {
+			log.Printf("Guilt buddy notification sent to %s for user %s", user.GuiltBuddyName, user.Name)
+		}
 	}
 }

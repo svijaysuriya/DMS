@@ -383,6 +383,38 @@
             min-height: 80px;
         }
 
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #D1D5DB;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+            font-family: inherit;
+            background: white;
+            cursor: pointer;
+        }
+
+        .form-group select:focus {
+            outline: none;
+            border-color: #4F46E5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .phone-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .country-code-select {
+            width: 120px !important;
+            flex-shrink: 0;
+        }
+
+        .phone-number-input {
+            flex: 1;
+        }
+
         .helper-text {
             font-size: 0.8rem;
             color: #6B7280;
@@ -574,14 +606,80 @@
 
                     <div class="form-group">
                         <label>Phone Number <span class="required">*</span></label>
-                        <input type="tel" id="phone" name="phone" required placeholder="+919999999999">
-                        <div class="helper-text">Include country code (e.g., +91 for India, +1 for US)</div>
+                        <div class="phone-input-group">
+                            <select id="countryCode" name="countryCode" class="country-code-select">
+                                <option value="+91">🇮🇳 +91</option>
+                                <option value="+1">🇺🇸 +1</option>
+                                <option value="+44">🇬🇧 +44</option>
+                                <option value="+61">🇦🇺 +61</option>
+                                <option value="+81">🇯🇵 +81</option>
+                                <option value="+86">🇨🇳 +86</option>
+                                <option value="+49">🇩🇪 +49</option>
+                                <option value="+33">🇫🇷 +33</option>
+                                <option value="+39">🇮🇹 +39</option>
+                                <option value="+34">🇪🇸 +34</option>
+                                <option value="+55">🇧🇷 +55</option>
+                                <option value="+52">🇲🇽 +52</option>
+                                <option value="+7">🇷🇺 +7</option>
+                                <option value="+82">🇰🇷 +82</option>
+                                <option value="+65">🇸🇬 +65</option>
+                                <option value="+60">🇲🇾 +60</option>
+                                <option value="+62">🇮🇩 +62</option>
+                                <option value="+66">🇹🇭 +66</option>
+                                <option value="+84">🇻🇳 +84</option>
+                                <option value="+63">🇵🇭 +63</option>
+                                <option value="+971">🇦🇪 +971</option>
+                                <option value="+966">🇸🇦 +966</option>
+                                <option value="+20">🇪🇬 +20</option>
+                                <option value="+27">🇿🇦 +27</option>
+                                <option value="+234">🇳🇬 +234</option>
+                                <option value="+254">🇰🇪 +254</option>
+                                <option value="+92">🇵🇰 +92</option>
+                                <option value="+880">🇧🇩 +880</option>
+                                <option value="+94">🇱🇰 +94</option>
+                                <option value="+977">🇳🇵 +977</option>
+                                <option value="+64">🇳🇿 +64</option>
+                                <option value="+353">🇮🇪 +353</option>
+                                <option value="+31">🇳🇱 +31</option>
+                                <option value="+32">🇧🇪 +32</option>
+                                <option value="+41">🇨🇭 +41</option>
+                                <option value="+43">🇦🇹 +43</option>
+                                <option value="+46">🇸🇪 +46</option>
+                                <option value="+47">🇳🇴 +47</option>
+                                <option value="+45">🇩🇰 +45</option>
+                                <option value="+358">🇫🇮 +358</option>
+                                <option value="+48">🇵🇱 +48</option>
+                                <option value="+90">🇹🇷 +90</option>
+                            </select>
+                            <input type="tel" id="phone" name="phone" required placeholder="9999999999" class="phone-number-input">
+                        </div>
+                        <div class="helper-text">Select country code and enter your number</div>
                     </div>
 
                     <div class="form-group">
                         <label>Daily Task <span class="required">*</span></label>
                         <textarea id="task" name="task" required minlength="5" maxlength="200" placeholder="Exercise for 30 minutes"></textarea>
                         <div class="helper-text">What should you do every day?</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Timezone</label>
+                        <select id="timezone" name="timezone">
+                            <option value="">Auto-detect from Device</option>
+                            <option value="Asia/Kolkata">India (IST)</option>
+                            <option value="America/New_York">US Eastern (EST/EDT)</option>
+                            <option value="America/Chicago">US Central (CST/CDT)</option>
+                            <option value="America/Denver">US Mountain (MST/MDT)</option>
+                            <option value="America/Los_Angeles">US Pacific (PST/PDT)</option>
+                            <option value="Europe/London">UK (GMT/BST)</option>
+                            <option value="Europe/Paris">Europe Central (CET/CEST)</option>
+                            <option value="Asia/Dubai">Dubai (GST)</option>
+                            <option value="Asia/Singapore">Singapore (SGT)</option>
+                            <option value="Asia/Tokyo">Japan (JST)</option>
+                            <option value="Australia/Sydney">Australia Eastern (AEST/AEDT)</option>
+                            <option value="UTC">UTC</option>
+                        </select>
+                        <div class="helper-text">Reminders will be sent at 9 AM in your timezone</div>
                     </div>
 
                     <div class="checkbox-group" onclick="toggleGuiltBuddy()">
@@ -597,7 +695,26 @@
 
                         <div class="form-group">
                             <label>Buddy Phone</label>
-                            <input type="tel" id="guiltBuddyPhone" name="guiltBuddyPhone" placeholder="+911234567890">
+                            <div class="phone-input-group">
+                                <select id="buddyCountryCode" name="buddyCountryCode" class="country-code-select">
+                                    <option value="+91">🇮🇳 +91</option>
+                                    <option value="+1">🇺🇸 +1</option>
+                                    <option value="+44">🇬🇧 +44</option>
+                                    <option value="+61">🇦🇺 +61</option>
+                                    <option value="+81">🇯🇵 +81</option>
+                                    <option value="+86">🇨🇳 +86</option>
+                                    <option value="+49">🇩🇪 +49</option>
+                                    <option value="+33">🇫🇷 +33</option>
+                                    <option value="+65">🇸🇬 +65</option>
+                                    <option value="+60">🇲🇾 +60</option>
+                                    <option value="+971">🇦🇪 +971</option>
+                                    <option value="+92">🇵🇰 +92</option>
+                                    <option value="+880">🇧🇩 +880</option>
+                                    <option value="+94">🇱🇰 +94</option>
+                                    <option value="+977">🇳🇵 +977</option>
+                                </select>
+                                <input type="tel" id="guiltBuddyPhone" name="guiltBuddyPhone" placeholder="1234567890" class="phone-number-input">
+                            </div>
                             <div class="helper-text">They'll be notified if you don't complete your task</div>
                         </div>
                     </div>
@@ -673,6 +790,20 @@
         function openModal() {
             document.getElementById('modalOverlay').classList.add('active');
             document.body.style.overflow = 'hidden';
+
+            // Auto-detect browser timezone and pre-select if it's in our list
+            try {
+                const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const timezoneSelect = document.getElementById('timezone');
+                for (let option of timezoneSelect.options) {
+                    if (option.value === browserTimezone) {
+                        timezoneSelect.value = browserTimezone;
+                        break;
+                    }
+                }
+            } catch (e) {
+                console.log('Could not detect timezone:', e);
+            }
         }
 
         function closeModal() {
@@ -733,11 +864,24 @@
         }
 
         // Form validation
-        function validatePhone(phone) {
+        function validatePhone(phone, countryCode = null) {
             // Remove spaces and dashes
             phone = phone.replace(/[\s-]/g, '');
 
-            // Check if starts with +
+            // If country code is provided separately, combine them
+            if (countryCode) {
+                // Remove any + the user might have typed in phone field
+                phone = phone.replace(/^\+/, '');
+
+                // Check length (should be 6-14 digits for local number)
+                if (!/^\d{6,14}$/.test(phone)) {
+                    return { valid: false, message: 'Phone number must be 6-14 digits' };
+                }
+
+                return { valid: true, phone: countryCode + phone };
+            }
+
+            // Legacy validation for full phone numbers (with country code included)
             if (!phone.startsWith('+')) {
                 return { valid: false, message: 'Phone number must start with + (country code)' };
             }
@@ -761,14 +905,17 @@
 
             // Get form values
             const name = document.getElementById('name').value.trim();
+            const countryCode = document.getElementById('countryCode').value;
             const phone = document.getElementById('phone').value.trim();
             const task = document.getElementById('task').value.trim();
+            const timezone = document.getElementById('timezone').value;
             const hasGuiltBuddy = document.getElementById('hasGuiltBuddy').checked;
             const guiltBuddyName = document.getElementById('guiltBuddyName').value.trim();
+            const buddyCountryCode = document.getElementById('buddyCountryCode').value;
             const guiltBuddyPhone = document.getElementById('guiltBuddyPhone').value.trim();
 
-            // Validate phone number
-            const phoneValidation = validatePhone(phone);
+            // Validate phone number (with country code from dropdown)
+            const phoneValidation = validatePhone(phone, countryCode);
             if (!phoneValidation.valid) {
                 showToast(phoneValidation.message, 'error');
                 submitBtn.disabled = false;
@@ -776,11 +923,12 @@
                 return;
             }
 
-            // Validate guilt buddy phone if provided
+            // Validate guilt buddy phone if provided (with country code from dropdown)
+            let buddyPhoneValidation = null;
             if (hasGuiltBuddy && guiltBuddyPhone) {
-                const buddyPhoneValidation = validatePhone(guiltBuddyPhone);
+                buddyPhoneValidation = validatePhone(guiltBuddyPhone, buddyCountryCode);
                 if (!buddyPhoneValidation.valid) {
-                    showToast('Buddy ' + buddyPhoneValidation.message, 'error');
+                    showToast('Buddy phone: ' + buddyPhoneValidation.message, 'error');
                     submitBtn.disabled = false;
                     submitBtn.textContent = 'Register';
                     return;
@@ -799,11 +947,11 @@
             const requestBody = {
                 phone_number: phoneValidation.phone,
                 name: name,
-                task: task
+                task: task,
+                timezone: timezone // Empty string means auto-detect from phone country code
             };
 
-            if (hasGuiltBuddy && guiltBuddyName && guiltBuddyPhone) {
-                const buddyPhoneValidation = validatePhone(guiltBuddyPhone);
+            if (hasGuiltBuddy && guiltBuddyName && guiltBuddyPhone && buddyPhoneValidation) {
                 requestBody.guilt_buddy_name = guiltBuddyName;
                 requestBody.guilt_buddy_phone = buddyPhoneValidation.phone;
             }

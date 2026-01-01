@@ -25,6 +25,7 @@ type User struct {
 	Task            string    `json:"task"`
 	GuiltBuddyPhone string    `json:"guilt_buddy_phone"` // Phone number to notify when task is not completed
 	GuiltBuddyName  string    `json:"guilt_buddy_name"`  // Name of the guilt buddy
+	Timezone        string    `json:"timezone"`          // User's timezone (e.g., "Asia/Kolkata")
 	CreatedAt       time.Time `json:"created_at"`
 	Active          bool      `json:"active"`
 }
@@ -71,10 +72,11 @@ func InitDB(dbPath string) error {
 		return fmt.Errorf("failed to create users table: %v", err)
 	}
 
-	// Add guilt buddy columns if they don't exist (for existing databases)
+	// Add columns if they don't exist (for existing databases)
 	alterTableQueries := []string{
 		`ALTER TABLE users ADD COLUMN guilt_buddy_phone TEXT DEFAULT ''`,
 		`ALTER TABLE users ADD COLUMN guilt_buddy_name TEXT DEFAULT ''`,
+		`ALTER TABLE users ADD COLUMN timezone TEXT DEFAULT 'UTC'`,
 	}
 
 	for _, query := range alterTableQueries {
@@ -120,9 +122,14 @@ func InitDB(dbPath string) error {
 }
 
 // CreateUser inserts a new user into the database
-func CreateUser(phoneNumber, name, task, guiltBuddyPhone, guiltBuddyName string) (*User, error) {
-	query := `INSERT INTO users (phone_number, name, task, guilt_buddy_phone, guilt_buddy_name) VALUES (?, ?, ?, ?, ?)`
-	result, err := db.Exec(query, phoneNumber, name, task, guiltBuddyPhone, guiltBuddyName)
+func CreateUser(phoneNumber, name, task, guiltBuddyPhone, guiltBuddyName, timezone string) (*User, error) {
+	// Default to UTC if no timezone provided
+	if timezone == "" {
+		timezone = "UTC"
+	}
+
+	query := `INSERT INTO users (phone_number, name, task, guilt_buddy_phone, guilt_buddy_name, timezone) VALUES (?, ?, ?, ?, ?, ?)`
+	result, err := db.Exec(query, phoneNumber, name, task, guiltBuddyPhone, guiltBuddyName, timezone)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create user: %v", err)
 	}
@@ -139,6 +146,7 @@ func CreateUser(phoneNumber, name, task, guiltBuddyPhone, guiltBuddyName string)
 		Task:            task,
 		GuiltBuddyPhone: guiltBuddyPhone,
 		GuiltBuddyName:  guiltBuddyName,
+		Timezone:        timezone,
 		CreatedAt:       time.Now(),
 		Active:          true,
 	}
@@ -148,10 +156,10 @@ func CreateUser(phoneNumber, name, task, guiltBuddyPhone, guiltBuddyName string)
 
 // GetUserByPhone retrieves a user by phone number
 func GetUserByPhone(phoneNumber string) (*User, error) {
-	query := `SELECT id, phone_number, name, task, guilt_buddy_phone, guilt_buddy_name, created_at, active FROM users WHERE phone_number = ?`
+	query := `SELECT id, phone_number, name, task, guilt_buddy_phone, guilt_buddy_name, timezone, created_at, active FROM users WHERE phone_number = ?`
 	user := &User{}
 	err := db.QueryRow(query, phoneNumber).Scan(
-		&user.ID, &user.PhoneNumber, &user.Name, &user.Task, &user.GuiltBuddyPhone, &user.GuiltBuddyName, &user.CreatedAt, &user.Active,
+		&user.ID, &user.PhoneNumber, &user.Name, &user.Task, &user.GuiltBuddyPhone, &user.GuiltBuddyName, &user.Timezone, &user.CreatedAt, &user.Active,
 	)
 	if err != nil {
 		return nil, err
@@ -161,10 +169,10 @@ func GetUserByPhone(phoneNumber string) (*User, error) {
 
 // GetUserByID retrieves a user by ID
 func GetUserByID(userID int64) (*User, error) {
-	query := `SELECT id, phone_number, name, task, guilt_buddy_phone, guilt_buddy_name, created_at, active FROM users WHERE id = ?`
+	query := `SELECT id, phone_number, name, task, guilt_buddy_phone, guilt_buddy_name, timezone, created_at, active FROM users WHERE id = ?`
 	user := &User{}
 	err := db.QueryRow(query, userID).Scan(
-		&user.ID, &user.PhoneNumber, &user.Name, &user.Task, &user.GuiltBuddyPhone, &user.GuiltBuddyName, &user.CreatedAt, &user.Active,
+		&user.ID, &user.PhoneNumber, &user.Name, &user.Task, &user.GuiltBuddyPhone, &user.GuiltBuddyName, &user.Timezone, &user.CreatedAt, &user.Active,
 	)
 	if err != nil {
 		return nil, err
@@ -174,7 +182,7 @@ func GetUserByID(userID int64) (*User, error) {
 
 // GetAllActiveUsers retrieves all active users
 func GetAllActiveUsers() ([]User, error) {
-	query := `SELECT id, phone_number, name, task, guilt_buddy_phone, guilt_buddy_name, created_at, active FROM users WHERE active = 1`
+	query := `SELECT id, phone_number, name, task, guilt_buddy_phone, guilt_buddy_name, timezone, created_at, active FROM users WHERE active = 1`
 	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
@@ -184,7 +192,7 @@ func GetAllActiveUsers() ([]User, error) {
 	var users []User
 	for rows.Next() {
 		var user User
-		if err := rows.Scan(&user.ID, &user.PhoneNumber, &user.Name, &user.Task, &user.GuiltBuddyPhone, &user.GuiltBuddyName, &user.CreatedAt, &user.Active); err != nil {
+		if err := rows.Scan(&user.ID, &user.PhoneNumber, &user.Name, &user.Task, &user.GuiltBuddyPhone, &user.GuiltBuddyName, &user.Timezone, &user.CreatedAt, &user.Active); err != nil {
 			return nil, err
 		}
 		users = append(users, user)
